@@ -3,6 +3,7 @@ package com.desafio.ubsfacil.controller;
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.desafio.ubsfacil.models.MedicModel;
 import com.desafio.ubsfacil.models.NurseModel;
+import com.desafio.ubsfacil.models.UserModel;
 import com.desafio.ubsfacil.repository.MedicRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -46,6 +47,55 @@ public class MedicController {
         Optional<MedicModel> medic = medicRepository.findById(id);
         if (medic.isPresent()) {
             return ResponseEntity.ok(medic);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<MedicModel> updateMedic(@PathVariable UUID id, @RequestBody MedicModel updatedMedic) {
+        Optional<MedicModel> medicOptional = medicRepository.findById(id);
+
+        if (medicOptional.isPresent()) {
+            MedicModel medic = medicOptional.get();
+
+            if (updatedMedic.getUsername() != null) {
+                medic.setUsername(updatedMedic.getUsername());
+            }
+            if (updatedMedic.getName() != null) {
+                medic.setName(updatedMedic.getName());
+            }
+            if (updatedMedic.getPassword() != null) {
+                // Lembre-se de criptografar a senha novamente se necessário
+                var passwordHashred = BCrypt.withDefaults()
+                        .hashToString(12, updatedMedic.getPassword().toCharArray());
+                MedicModel updatedMedicModel = medicRepository.save(medic);
+                medic.setPassword(passwordHashred);
+            }
+            if (updatedMedic.getNumberCard() != null) {
+                medic.setNumberCard(updatedMedic.getNumberCard());
+            }
+            if (updatedMedic.getCrm() != null ) {
+                medic.setCrm(updatedMedic.getCrm());
+            }
+            if (updatedMedic.getSpecialised() != null ) {
+                medic.setSpecialised(updatedMedic.getSpecialised());
+            }
+
+            MedicModel updatedMedicModel = medicRepository.save(medic);
+
+            return ResponseEntity.ok(updatedMedicModel);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMedic(@PathVariable UUID id) {
+        Optional<MedicModel> userOptional = medicRepository.findById(id);
+
+        if (userOptional.isPresent()) {
+            medicRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
         }

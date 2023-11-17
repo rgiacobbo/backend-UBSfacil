@@ -1,10 +1,8 @@
 package com.desafio.ubsfacil.controller;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
-import com.desafio.ubsfacil.models.MedicModel;
 import com.desafio.ubsfacil.models.NurseModel;
 import com.desafio.ubsfacil.models.UserModel;
-import com.desafio.ubsfacil.repository.MedicRepository;
 import com.desafio.ubsfacil.repository.NurseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -53,4 +51,46 @@ public class NurseController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<NurseModel> updateNurse(@PathVariable UUID id, @RequestBody NurseModel updatedNurse) {
+        Optional<NurseModel> nurseOptional = nurseRepository.findById(id);
+
+        if (nurseOptional.isPresent()) {
+            NurseModel nurse = nurseOptional.get();
+
+            if (updatedNurse.getUsername() != null) {
+                nurse.setUsername(updatedNurse.getUsername());
+            }
+            if (updatedNurse.getName() != null) {
+                nurse.setName(updatedNurse.getName());
+            }
+            if (updatedNurse.getPassword() != null) {
+                // Lembre-se de criptografar a senha novamente se necessário
+                var passwordHashred = BCrypt.withDefaults()
+                        .hashToString(12, updatedNurse.getPassword().toCharArray());
+                nurse.setPassword(passwordHashred);
+            }
+            if (updatedNurse.getNumberCard() != null) {
+                nurse.setNumberCard(updatedNurse.getNumberCard());
+            }
+            NurseModel updatedNurseModel = nurseRepository.save(nurse);
+            return ResponseEntity.ok(updatedNurseModel);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteNurse(@PathVariable UUID id) {
+        Optional<NurseModel> userOptional = nurseRepository.findById(id);
+
+        if (userOptional.isPresent()) {
+            nurseRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }

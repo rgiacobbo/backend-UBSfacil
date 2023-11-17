@@ -1,9 +1,9 @@
 package com.desafio.ubsfacil.controller;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
-import com.desafio.ubsfacil.models.NurseModel;
 import com.desafio.ubsfacil.models.UserModel;
 import com.desafio.ubsfacil.repository.UserRepository;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -51,4 +51,50 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserModel> updateUser(@PathVariable UUID id, @RequestBody UserModel updatedUser) {
+        Optional<UserModel> userOptional = userRepository.findById(id);
+
+        if (userOptional.isPresent()) {
+            UserModel user = userOptional.get();
+
+            if (updatedUser.getUsername() != null) {
+                user.setUsername(updatedUser.getUsername());
+            }
+            if (updatedUser.getName() != null) {
+                user.setName(updatedUser.getName());
+            }
+            if (updatedUser.getPassword() != null) {
+                // Lembre-se de criptografar a senha novamente se necessário
+                var passwordHashred = BCrypt.withDefaults()
+                        .hashToString(12, updatedUser.getPassword().toCharArray());
+                user.setPassword(passwordHashred);
+            }
+            if (updatedUser.getNumberCard() != null) {
+                user.setNumberCard(updatedUser.getNumberCard());
+            }
+            if (updatedUser.getValidade() != null) {
+                user.setValidade(updatedUser.getValidade());
+            }
+
+            UserModel updatedUserModel = userRepository.save(user);
+            return ResponseEntity.ok(updatedUserModel);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
+        Optional<UserModel> userOptional = userRepository.findById(id);
+
+        if (userOptional.isPresent()) {
+            userRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }
